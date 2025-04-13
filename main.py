@@ -1,17 +1,28 @@
 from fastapi import FastAPI, HTTPException
 from google.cloud import storage
 import os
+import json
 import faiss
 import numpy as np
 import pandas as pd
 from sentence_transformers import SentenceTransformer
+from google.oauth2 import service_account
+
 
 app = FastAPI()
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials.json"
-bucket_name = "tao-language-qna"
+# 從 Render 環境變數取得憑證資訊
+credentials_json = os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON"]
+credentials_info = json.loads(credentials_json)
 
-storage_client = storage.Client()
+# 建立憑證物件
+credentials = service_account.Credentials.from_service_account_info(credentials_info)
+
+# 使用憑證建立 Google Cloud Storage Client
+storage_client = storage.Client(credentials=credentials)
+
+# 設定 Google Cloud Storage bucket 名稱
+bucket_name = "tao-language-qna"
 bucket = storage_client.bucket(bucket_name)
 
 def download_if_not_exists(blob_name, file_path):
